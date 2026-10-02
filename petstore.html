@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>After School Lessons</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+  <!-- Font Awesome (you can keep this) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    img {
+      max-width: 250px;
+      height: auto;
+      display: block;
+      margin-bottom: 15px;
+    }
+    button {
+      padding: 10px 18px;
+      margin: 8px 5px 8px 0;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app">
+
+    <!-- ========== LESSON PAGE ========== -->
+    <div v-if="!displayCart">
+      <h1>After School Club</h1>
+
+      <!-- Checkout button -->
+      <button
+        @click="toggleCart"
+        :disabled="numberOfItems === 0">
+        <i class="fa-solid fa-cart-shopping"></i>
+        Checkout ({{ numberOfItems }})
+      </button>
+
+      <img :src="lesson.image" :alt="lesson.imageAlt">
+
+      <h2>{{ lesson.subject }}</h2>
+      <p><strong>Location:</strong> {{ lesson.location }}</p>
+      <p><strong>Price:</strong> £{{ lesson.price }}</p>
+      <p><strong>Spaces left:</strong> {{ lesson.spaces }}</p>
+
+      <button
+        @click="addToCart"
+        :disabled="!canAddToCart">
+        Add to Cart
+      </button>
+    </div>
+
+    <!-- ========== CHECKOUT PAGE ========== -->
+    <div v-else>
+      <h1>Checkout</h1>
+      <p>You have <strong>{{ numberOfItems }}</strong> item(s) in your cart.</p>
+
+      <button @click="toggleCart">
+        <i class="fa-solid fa-arrow-left"></i>
+        Back to Lessons
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          lesson: {
+            id: 1001,
+            subject: "Math",
+            location: "London",
+            price: 100,
+            spaces: 5,
+            image: "images/math.png",          // ← change this to your real image path
+            imageAlt: "Math after-school lesson"
+          },
+          cart: [],
+          displayCart: false
+        }
+      },
+
+      computed: {
+        numberOfItems() {
+          return this.cart.length;
+        },
+        canAddToCart() {
+          return this.lesson.spaces > 0;
+        }
+      },
+
+      methods: {
+        addToCart() {
+          if (this.canAddToCart) {
+            this.cart.push(this.lesson.id);   // only the ID
+            this.lesson.spaces--;
+          }
+        },
+        toggleCart() {
+          this.displayCart = !this.displayCart;
+        }
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

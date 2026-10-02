@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Pet Store</title>
+
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+
+<body>
+
+    <div id="app1">
+        <button
+            v-on:click="toggleCart"
+            v-bind:disabled="numberOfItems === 0">
+            Checkout ({{ numberOfItems }})
+        </button>
+        <div v-if="displayCart === false">
+
+            <h1>{{ lesson.subject }}</h1>
+
+            <p>
+                <strong>Lesson ID:</strong>
+                {{ lesson.id }}
+            </p>
+
+            <p>
+                <strong>Location:</strong>
+                {{ lesson.location }}
+            </p>
+
+            <p>
+                <strong>Price:</strong>
+                ${{ lesson.price }}
+            </p>
+
+            <p>
+                <strong>Availability:</strong>
+                {{ lesson.availability }}
+            </p>
+            <button
+                v-on:click="addToCart"
+                v-bind:disabled="canAddToCart === false">
+                Add to Cart
+            </button>
+
+        </div>
+        <div v-else>
+
+            <h1>Checkout</h1>
+
+            <p>
+                You have {{ numberOfItems }} item(s) in your cart.
+            </p>
+
+            <p>
+                Your cart contains:
+            </p>
+
+            <ul>
+                <li v-for="item in cart">
+                    Lesson ID: {{ item }}
+                </li>
+            </ul>
+
+            <button v-on:click="toggleCart">
+                Back to Lessons
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        const { createApp } = Vue;
+
+        const myApp = createApp({
+
+            data() {
+
+                return {
+
+                    
+                    lesson: {
+                        id: 1001,
+                        subject: "Web Development",
+                        location: "Mauritius",
+                        price: 50,
+                        availability: 5
+                    },
+
+                    // Store id of lessons added to cart
+                    cart: [],
+
+                    displayCart: false
+                };
+            },
+            methods: {
+                addToCart() {
+                    this.cart.push(this.lesson.id);
+
+                    this.lesson.availability--;
+                },
+                toggleCart() {
+
+                    this.displayCart = !this.displayCart;
+
+                }
+            },
+            computed: {
+
+                // Checks whether the lesson can be added
+                canAddToCart() {
+                    return this.lesson.availability > 0;
+                },
+                numberOfItems() {
+                    return this.cart.length;
+                }
+            }
+        });
+     
+        myApp.mount('#app1');
+
+    </script>
+
+</body>
+
+</html>

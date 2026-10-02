@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+    
+    <div id="app1">
+        <h1> My Todo List</h1>
+        <input type="text" id="username" name="username" v-model="newTask">
+        <button v-on:click="addItem">Add Item</button>
+        <ul id="todoList">
+            <li v-for="task in tasks">{{ task }}</li>
+        </ul>
+    </div>
+
+    <script>
+        const {createApp} = Vue;
+        const myApp = createApp({
+            data(){
+                return{
+                    newTask: '',
+                    tasks:['Task 1', 'Task 2', 'Task 3']
+                }
+            },
+            methods:{
+                addItem(){
+                    if (this.newTask.trim() !== '') 
+                    {
+                        this.tasks.push(this.newTask);
+                        this.newTask = '';
+                    }
+                }
+            }
+        })
+        myApp.mount('#app1');
+    </script>
+
+</body>
+</html>
