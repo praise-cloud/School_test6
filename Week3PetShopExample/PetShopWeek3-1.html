@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    
+    <script src="products.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+
+    <div id="app">
+        <div v-if="showProduct">
+            <h1 v-text = "sitename"></h1>
+            <button @click="toggleCheckout">  <i class="fa fa-shopping-cart" aria-hidden="true"></i> Checkout ({{cartItemCount}})</button>
+            
+            <!-- Product information -->
+            <figure>
+                <img v-bind:src="product.image" width = 300>
+            </figure>
+            <h2 v-text="product.title"></h2>
+            <p v-text="product.description"></p>
+            <p>Price: £{{product.price}}</p>
+            <p>{{product.availableInventory}} available.</p>
+            <!-- <button v-on:click="addItem()" v-bind:disabled="!canAddToCart">Add to cart</button> -->
+
+
+        </div>  
+        <div v-else>
+            <h1>Checkout Page</h1>
+            <button @click="toggleCheckout"> Return to store </button>
+        </div>   
+     
+    </div>
+
+    <script type="module">
+        const {createApp} = Vue
+        const petstore = createApp({
+            data(){
+                return{
+                    sitename: "Vue.js Pet Depot",
+                    product: {
+                        id: 1001,
+                        title: "Cat Food, 25lb bag",
+                        description: "A 25 pound bag of irresistible, organic goodness for your cat.",
+                        price: 2000,
+                        image: "images/catFood.jpg",
+                        availableInventory:5,
+                    },
+                    products: productsArray,
+                    cart:[],
+                    showProduct: true
+                }
+            },
+            computed:{
+                cartItemCount:function(){
+                    return this.cart.length;
+                },
+                canAddToCart:function(){
+                    return this.cart.length < this.product.availableInventory;
+                }
+            },
+            methods:{
+                addItem(){
+                    this.cart.push(this.product.id);
+                },
+                toggleCheckout(){
+                    this.showProduct = this.showProduct ? false : true;
+                }
+            }
+        })
+        petstore.mount('#app')
+    </script>
+    
+</body>
+</html>
