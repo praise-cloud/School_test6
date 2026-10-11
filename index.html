@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>After School Lessons</title>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-  <script src="./project.js"></script>
+  <script src="./products.js"></script>
 
   <!-- Font Awesome (you can keep this) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -40,7 +40,7 @@
 
     <!-- ========== LESSON PAGE ========== -->
     <div v-if="!displayCart">
-      <h1>After School Club</h1>
+      <h1>Pet Shop</h1>
 
       <!-- Checkout button -->
       <button
@@ -50,29 +50,62 @@
         Checkout ({{ numberOfItems }})
       </button>
 
-      <img :src="lesson.image" :alt="lesson.imageAlt">
+      <!-- product section -->
+       <div v-for="product in sortedProducts">
+        <figure>
+            <img :src="product.image" :alt="product.imageAlt">
+        </figure>
+            <h2>{{ product.title }}</h2>
+            <p>{{product.id}}</p>
+            <p><strong>Description :</strong><br>{{ product.description }}</p>
+            <p><strong>Price</strong> {{ product.price }}</p>
+            <p><strong>{{product.availableInventory}}</strong> items avaiable</p>
+            <p>{{cartProductCount(product.id)}} Items in cart</p>
+            <button v-on:click="addItem(product)" v-bind:disabled="!canAddToCart(product)">Add to cart</button>
 
-      <h2>{{ lesson.subject }}</h2>
-      <p><strong>Location:</strong> {{ lesson.location }}</p>
-      <p><strong>Price:</strong> £{{ lesson.price }}</p>
-      <p><strong>Spaces left:</strong> {{ lesson.spaces }}</p>
-
-      <button
-        @click="addToCart"
-        :disabled="!canAddToCart">
-        Add to Cart
-      </button>
+            <!-- Buttons -->
+            <!-- <p>{{canAddToCart}}Can we add items to cart</p> -->
+       </div>
     </div>
 
     <!-- ========== CHECKOUT PAGE ========== -->
     <div v-else>
-      <h1>Checkout</h1>
-      <p>You have <strong>{{ numberOfItems }}</strong> item(s) in your cart.</p>
+      <h1>Checkou Page</h1>
+      <button @click="toggleCart"><i class="fa-solid fa-arrow-left"></i> Return to shop</button>
+      <p>Title:
+        <select v-model="faveSeason">
+          <option disabled value="unknown">Choose</option>
+          <option>Mr</option>
+          <option>Mrs</option>
+          <option>Master</option>
+          <option>Miss</option>
+        </select>
+      </p>
+      <p>First Name: <input v-model="firstName"></p>
+      <p>Last Name: <input v-model="lastName"></p>
+      <p>Telephone: <input v-model="telephone"></p>
 
-      <button @click="toggleCart">
-        <i class="fa-solid fa-arrow-left"></i>
-        Back to Lessons
-      </button>
+      <h2>Summary</h2>
+      <h2>Your Cart</h2>
+ 
+      <!-- Show message if cart is empty -->
+      <p v-if="cartItems.length === 0">Your cart is empty.</p>
+
+      <!-- Loop through the items in the cart -->
+      <div v-for="item in cartItems" :key="item.id" style="border-bottom: 1px solid #ccc; margin-bottom: 15px; padding-bottom: 10px;">
+        <figure>
+            <img :src="item.image" :alt="product.imageAlt">
+        </figure>
+        <h3>{{ item.title }}</h3>
+        <p>Price: £{{ item.price }}</p>
+        <p>Quantity: {{ item.quantity }}</p>
+        <p><strong>Subtotal: £{{ item.price * item.quantity }}</strong></p>
+      </div>
+
+      <!-- Optional: Total price -->
+      <h3 v-if="cartItems.length > 0">
+        Total: £{{ cartTotal }}
+      </h3>
     </div>
 
   </div>
@@ -83,39 +116,81 @@
     createApp({
       data() {
         return {
-          lesson: {
-            id: 1001,
-            subject: "Math",
-            location: "London",
-            price: 100,
-            spaces: 5,
-            image: "images/math.png",          // ← change this to your real image path
-            imageAlt: "Math after-school lesson"
+          message: "Welcome to my petstore !!!",
+          product : {
           },
+          firstName:"",
+          lastName:"",
+          likeCats: true,
+          likeDogs: false,
+          faveSeason:"unknown",
+          products: productsArray,
           cart: [],
           displayCart: false
         }
       },
 
       computed: {
-        numberOfItems() {
-          return this.cart.length;
-        },
-        canAddToCart() {
-          return this.lesson.spaces > 0;
-        }
+          numberOfItems() {
+            return this.cart.length;
+          },
+
+          sortedProducts() {
+            function compare(a, b) {
+              if (a.price > b.price) return 1;
+              if (a.price < b.price) return -1;
+              return 0;
+            }
+            // Important: make a copy so we don't permanently sort the original array
+            return [...this.products].sort(compare);
+          },
+
+          // This is the one the template needs
+          cartItems() {
+            const counts = {};
+            this.cart.forEach(id => {
+              counts[id] = (counts[id] || 0) + 1;
+            });
+
+            return Object.keys(counts).map(id => {
+              const product = this.products.find(p => p.id == id);
+              return {
+                ...product,
+                quantity: counts[id]
+              };
+            });
+          },
+
+          // Total price
+          cartTotal() {
+            return this.cartItems.reduce((total, item) => {
+              return total + (item.price * item.quantity);
+            }, 0);
+          }
       },
 
       methods: {
-        addToCart() {
-          if (this.canAddToCart) {
-            this.cart.push(this.lesson.id);   // only the ID
-            this.lesson.spaces--;
-          }
+        addItem(product) {
+          if(this.canAddToCart(product)){
+              this.cart.push(product.id);
+              product.availableInventory--
+            }
         },
         toggleCart() {
           this.displayCart = !this.displayCart;
-        }
+        },
+        canAddToCart(product) {
+          return product.availableInventory > 0;
+        },
+        cartProductCount(id){
+          let count = 0
+          for (let i = 0; i < this.cart.length; i++){
+            if (this.cart[i] === id){
+              count ++
+            }
+          }
+          return count
+        },
       }
     }).mount('#app');
   </script>
