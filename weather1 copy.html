@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+</head>
+<body>
+
+    <div id="weather">
+        <h2>Today's weather in {{ city }}</h2>
+
+        <div v-if="weatherData">
+            <p>Temperature :{{weatherData.temperature}}</p>
+            <p>Wind : {{weatherData.wind}}</p>
+            <p>Description: {{weatherData.description}}</p>
+            <button @click = "fetchData()">Refresh Weather Data</button>
+        </div>
+        <p v-else>Loading weather data ....</p>
+
+        <h2>Third example</h2>
+        <p>Today's weather in {{ city }}</p>
+        <label>Change city:</label>
+        <select v-model="city">
+            <option v-for="c in cities" :key="c" :value="c">{{ c }}</option>
+        </select>
+
+        <h2>Fourth Example</h2>
+        <p>Face detecting API at work</p>
+        <button @click="startFaceDetection" :disabled="faceDetectionRunning">{{faceDetectionRunning ? "Detceting faces..." : "start face detection"}}</button>
+        <p>{{faceDetectionStatus}}</p>
+
+        <video
+            ref="faceVideo"
+            autoplay
+            muted
+            playsinline
+            style="max-width: 100%"></video>
+    </div>
+    <!-- Display weather details once loaded -->
+    <script>
+        const {createApp} = Vue
+        const myApp = createApp({
+            data(){
+                return{
+                    // this is the data that is to be rendered from the API respones unto the web page
+                 weatherData: null,
+                 city: "London",
+                 cities: ["London", "PortLouis", "Dubai"],
+                 faceDetectionRunning: false,
+                faceDetectionStatus: "Ready.",
+                faceModelLoaded: false,
+                faceDetectionFrame: null,
+                }
+            },
+
+            mounted() {
+                this.fetchData()
+            },
+
+            watch :{
+                city: "fetchData"
+            },
+
+            methods:{
+                async fetchData(){
+                    try {
+                        // this is the request from the API
+                        const url = "https://goweather.xyz/v2/weather/" + this.city
+                        const response = await fetch(url)
+
+                        // if after the fetch , it an issue comes up , you let the user know
+                        if(!response.ok){
+                            throw new Error(`HTTP error ! status: ${response.status}`)
+                        }
+
+                        // if there is no error you store in json format, the response from the API
+                        this.weatherData = await response.json()
+                    }
+                    catch(error){
+                        // update the user incase of any error
+                        console.log("Failed to fetch weather data: ", error)
+                    }
+                },
+
+                async startFaceDetection(){
+                    try {
+                        //  this the detection model loading , when the applicaiton starts running
+                        this.faceDetectionStatus = "Loading face-detection model ...";
+
+                        // this is for the face detection status , to first get the uri and then also make sure that the face detection model is also loaded at the same time
+                        if (!this.faceModelLoaded){
+                            await faceapi.nets.tinyFaceDetector.loadFromUri("https://justadudewhohacks.github.io/face-api.js/models")
+                            this.faceModelLoaded = true
+                        }
+
+                        // the request for the access to the camera after the uri has being accessed and then the camera function is needed
+                        this.faceDetectionStatus = "Resquesting camera access ...."
+                        const stream = await navigator.mediaDevices.getUserMedia({
+                            video: true
+                        })
+
+                        const video = this.$refs.faceVideo
+                        video.srcObject = stream
+                        await video.play()
+
+                        this.faceDetectionRunning = true
+                        this.faceDetectionStatus = "Looking for faces ...."
+                        this.detectFaces()
+                    }
+                    catch(erro){
+                        this.stopFaceDetection
+                        this.stopFaceDetectionStatus = `Could not start: ${error.message}`
+                        console.error("Could not strat face detection: ", error)
+                    }
+                },
+
+                async detectFaces() {
+                    if(!this.faceDetectionRunning) return
+
+                    const video = this.$refs.faceVideo
+
+                    try {
+                        if (video.readyState >= 2){
+                            const detections = await faceapi.detectAllFaces(
+                                video, new faceapi.TinyFaceDetectorOptions()
+                            )
+
+                            if(!this.faceDetectionRunning) return
+
+                            this.faceDetectionStatus = detections.length ? `Found ${detections.length} faces(s)` : "No faces detected."
+                        }
+                    } catch(erro){
+                        console.error("Face detection failed:", error)
+                        this.stopFaceDetection()
+                        this.faceDetectionStatus = `Detection failed: ${error.message}`
+                        return
+                    }
+
+                    this.faceDetectionFrame = requestAnimationFrame(() => this.detectFaces())
+                },
+
+                stopFaceDetection(){
+                    if(this.faceDetectionFrame !== null){
+                        cancelAnimationFrame(this.faceDetectionFrame)
+                        this.faceDetectionFrame = null
+                    }
+
+                    const video = this.$refs.faceVideo
+
+                    if(video && video.srcObject){
+                        video.srcObject.getTracks().forEach(track => track.stop())
+                        video.srcObject = null
+                    }
+
+                    this.faceDetectionRunning = false
+                }
+                },
+
+        })
+        myApp.mount("#weather")
+    </script>
+</body>
+</html>

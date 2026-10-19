@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+
+    <div id="weather">
+
+        <p> {{weatherData}}</p>
+
+        <button @click="fetchData()">Refresh Weather Data</button>
+
+        <h2> Second Example</h2>
+        <div v-if="weatherData">
+            <p><strong>Temperature</strong> {{weatherData.temperature}}</p>
+            <p><strong>Wind</strong> {{weatherData.wind}}</p>
+            <p><strong>Description</strong> {{weatherData.description}}</p>
+        </div>
+            <p v-else>Loading weather data.....</p>
+
+        <h2> Third  Example</h2>
+        <p> Today's weather in {{city}}</p>
+        <p> Change city:
+                <select v-model="city">
+                    <option v-for="c in cities">{{c}}</option>
+                </select>
+        </p>
+        <h2>Fourth Example</h2>
+        <p>{{JSON.stringify(weatherData, null, 2)}}</p>
+
+    </div>
+
+    <!-- Display weather details once loaded -->
+    <script>
+        const {createApp} = Vue
+        const myApp = createApp({
+            data(){
+                return{
+                    weatherData:null,
+                    city: 'London',
+                    cities:["London", "PortLouis", "Dubai"]
+                }
+            },
+            mounted()
+            {
+                this.fetchData()
+            },
+            watch:{
+                city: "fetchData"
+            },
+            methods:{
+                    async fetchData()
+                    {
+                        try{
+                            const url = "https://goweather.xyz/v2/weather/" + this.city
+                            const response = await fetch(url)
+
+                            if (!response.ok){
+                                throw new Error(`HTTP error ! status: ${response.status}`)
+                            }
+
+                            this.weatherData = await response.json()
+
+                        }catch(error)
+                        {
+                            console.log("Failed to fetch weather data: ",  error)
+                        }
+                    }               
+                },
+
+        })
+        myApp.mount("#weather")
+    </script>   
+</body>
+</html>

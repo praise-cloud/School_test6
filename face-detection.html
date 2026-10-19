@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Detection</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+</head>
+<body>
+    <main id="app">
+        <h1>Webcam Face Detection</h1>
+        <p>Allow camera access to detect faces in the video.</p>
+
+        <button
+            v-if="!faceDetectionRunning"
+            @click="startFaceDetection"
+            :disabled="faceDetectionLoading">
+            {{ faceDetectionLoading ? "Loading..." : "Start face detection" }}
+        </button>
+        <button v-else @click="stopFaceDetection">Stop camera</button>
+
+        <p role="status">{{ faceDetectionStatus }}</p>
+        <video
+            ref="faceVideo"
+            autoplay
+            muted
+            playsinline
+            style="display: block; max-width: 100%;"></video>
+    </main>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    faceDetectionLoading: false,
+                    faceDetectionRunning: false,
+                    faceDetectionStatus: "Click Start face detection to begin.",
+                    faceModelLoaded: false,
+                    faceDetectionFrame: null
+                };
+            },
+
+            beforeUnmount() {
+                this.stopFaceDetection();
+            },
+
+            methods: {
+                async startFaceDetection() {
+                    this.faceDetectionLoading = true;
+                    this.faceDetectionStatus = "Loading face-detection model...";
+
+                    try {
+                        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                            throw new Error("Camera access requires HTTPS or localhost.");
+                        }
+
+                        if (!this.faceModelLoaded) {
+                            await faceapi.nets.tinyFaceDetector.loadFromUri(
+                                "https://justadudewhohacks.github.io/face-api.js/models"
+                            );
+                            this.faceModelLoaded = true;
+                        }
+
+                        this.faceDetectionStatus = "Requesting camera access...";
+                        const stream = await navigator.mediaDevices.getUserMedia({
+                            video: true
+                        });
+
+                        const video = this.$refs.faceVideo;
+                        video.srcObject = stream;
+                        await video.play();
+
+                        this.faceDetectionRunning = true;
+                        this.faceDetectionStatus = "Looking for faces...";
+                        this.detectFaces();
+                    } catch (error) {
+                        this.stopFaceDetection();
+                        this.faceDetectionStatus = `Could not start: ${error.message}`;
+                        console.error("Could not start face detection:", error);
+                    } finally {
+                        this.faceDetectionLoading = false;
+                    }
+                },
+
+                async detectFaces() {
+                    if (!this.faceDetectionRunning) return;
+
+                    const video = this.$refs.faceVideo;
+
+                    try {
+                        if (video.readyState >= 2) {
+                            const detections = await faceapi.detectAllFaces(
+                                video,
+                                new faceapi.TinyFaceDetectorOptions()
+                            );
+
+                            if (!this.faceDetectionRunning) return;
+
+                            this.faceDetectionStatus = detections.length
+                                ? `Found ${detections.length} face(s).`
+                                : "No faces detected.";
+                        }
+                    } catch (error) {
+                        console.error("Face detection failed:", error);
+                        this.stopFaceDetection();
+                        this.faceDetectionStatus = `Detection failed: ${error.message}`;
+                        return;
+                    }
+
+                    this.faceDetectionFrame = requestAnimationFrame(() => this.detectFaces());
+                },
+
+                stopFaceDetection() {
+                    if (this.faceDetectionFrame !== null) {
+                        cancelAnimationFrame(this.faceDetectionFrame);
+                        this.faceDetectionFrame = null;
+                    }
+
+                    const video = this.$refs.faceVideo;
+                    if (video && video.srcObject) {
+                        video.srcObject.getTracks().forEach(track => track.stop());
+                        video.srcObject = null;
+                    }
+
+                    this.faceDetectionRunning = false;
+                    this.faceDetectionStatus = "Camera stopped.";
+                }
+            }
+        }).mount("#app");
+    </script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="products.js"></script>
+    <title>Pet Store</title>
+   
+</head>
+<body>
+    <div id="petstore">
+        <div v-if="showProduct"> 
+            <h1>{{message}}</h1>
+            <button @click="toggleCheckOut"> <i class="fa fa-shopping-cart"></i> Check Out ({{cartItemCount}}) </button>
+            <!--Product Info -->
+            <div v-for="product in sortedProducts">
+                <figure> 
+                <img v-bind:src="product.image" alt="Cat Image">
+                </figure>
+                <h2 v-text="product.title"> </h2>
+                <p v-text="product.id"></p>
+                <p v-text="product.description"></p>
+                <p>Price: {{product.price}}</p>  
+                <p> {{product.availableInventory }} available </p>
+                <p>{{cartProductCount(product.id)}} in cart !! </p>
+                <button @click="addItem(product)" v-bind:disabled="!canAddToCart(product)">Add to Cart</button>  
+                <!-- <p> {{cartItemCount}} items in cart</p>
+                <p> {{canAddToCart}} can we add items to cart</p> -->
+            </div>
+        </div>
+        <!-- Check Out Info-->
+        <div v-else>
+            <h1>Check Out Page</h1>
+            <button @click="toggleCheckOut"> Return to Product Page</button>
+            <p>Title:
+                <select v-model="order.title">
+                    <option v-for="title in titles">{{title}}</option>
+                </select>
+            </p>
+            <p>First Name: <input v-model="order.firstname"></p>
+            <p>Last Name: <input v-model="order.lastname"></p>
+            <p>Telephone: <input v-model="order.telephone"></p>
+
+            <h2>Summary</h2>
+            <p>{{order.title}} {{order.firstname}} {{order.lastname}} </p>
+            <p>Telephone: {{order.telephone}}</p>
+
+        </div>
+        
+    </div>
+    <script>
+        const {createApp} = Vue
+        const myApp = Vue.createApp({
+            data(){
+                return{
+                    message:'Welcome to my PetStore !!!',
+                    // product:{
+                    //     id: 1001,
+                    //     title:'Best Cat Food for your Cat',
+                    //     description:'Irresistible Cat Food',
+                    //     price:2000,
+                    //     image:'images/product-fullsize.png',
+                    //     availableInventory: 5
+                    // },
+                    products: productsArray,
+                    cart:[],
+                    showProduct:true,
+                    order:{
+                        firstname:"",
+                        lastname:"",
+                        telephone:"",
+                        title:""
+                    },
+                    titles:["Dr", "Miss", "Mr", "Mrs"]
+
+                }
+            },
+            computed:{
+                cartItemCount()
+                {
+                    return this.cart.length
+                },
+                sortedProducts:function(){
+                        function compare(a,b){
+                                if (a.price > b.price) return 1;
+                                if (a.price < b.price) return -1;
+                                return 0;
+                        }
+                        return this.products.sort(compare);
+                }
+            },
+            methods:{
+                addItem(product)
+                {
+                    this.cart.push(product.id)
+                },
+                toggleCheckOut()
+                {
+                    this.showProduct = this.showProduct ? false: true
+                },
+                canAddToCart(product)
+                {
+                    return this.cartProductCount(product.id) < product.availableInventory
+                },
+                cartProductCount(id)
+                {
+                    let count = 0
+                    for(let i = 0; i < this.cart.length; i++)
+                    {
+                        if (this.cart[i] === id)
+                        {
+                            count++
+                        }
+                    }
+                    return count
+                }
+            }
+
+        })
+        myApp.mount('#petstore')
+    </script>
+    
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student API Routes</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.5;
+      margin: 2rem auto;
+      max-width: 800px;
+      padding: 0 1rem;
+    }
+
+    form {
+      align-items: end;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin: 1rem 0;
+    }
+
+    label {
+      display: grid;
+      gap: 0.25rem;
+    }
+
+    button {
+      cursor: pointer;
+      padding: 0.5rem 0.75rem;
+    }
+
+    pre {
+      background: #f2f2f2;
+      min-height: 2rem;
+      overflow-wrap: anywhere;
+      padding: 1rem;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Student API Routes</h1>
+  <p>Use the buttons to call the server routes and display their responses.</p>
+
+  <section>
+    <h2>Welcome route</h2>
+    <button type="button" data-route="/">Call GET /</button>
+    <pre id="welcome-result" aria-live="polite">Not requested yet.</pre>
+  </section>
+
+  <section>
+    <h2>Student details</h2>
+    <button type="button" data-route="/api/student">Call GET /api/student</button>
+    <pre id="student-result" aria-live="polite">Not requested yet.</pre>
+  </section>
+
+  <section>
+    <h2>Student ID route</h2>
+    <form id="student-id-form">
+      <label>
+        Student ID
+        <input name="userId" value="1" required>
+      </label>
+      <button type="submit">Call GET /api/student/:userId</button>
+    </form>
+    <pre id="student-id-result" aria-live="polite">Not requested yet.</pre>
+  </section>
+
+  <section>
+    <h2>Delete student</h2>
+    <form id="delete-student-form">
+      <label>
+        Student ID
+        <input name="userId" value="1" required>
+      </label>
+      <button type="submit">Delete student</button>
+    </form>
+    <pre id="delete-student-result" aria-live="polite">Not requested yet.</pre>
+  </section>
+
+  <section>
+    <h2>Student ID and name route</h2>
+    <form id="student-name-form">
+      <label>
+        Student ID
+        <input name="id" value="1" required>
+      </label>
+      <label>
+        Name
+        <input name="name" value="Praise" required>
+      </label>
+      <button type="submit">Call GET /api/student/:id/:name</button>
+    </form>
+    <pre id="student-name-result" aria-live="polite">Not requested yet.</pre>
+  </section>
+
+  <script>
+    const configuredApi = new URLSearchParams(window.location.search).get('api')
+    const apiBase = configuredApi || (
+      window.location.port === '3000'
+        ? window.location.origin
+        : 'http://localhost:3000'
+    )
+
+    async function showRouteResult(url, resultElement, method = 'GET') {
+      resultElement.textContent = 'Loading...'
+
+      try {
+        const response = await fetch(new URL(url, apiBase), { method })
+        const body = await response.text()
+        let result = body
+
+        try {
+          result = JSON.stringify(JSON.parse(body), null, 2)
+        } catch {
+          // Keep plain-text route responses as-is.
+        }
+
+        resultElement.textContent = `${response.status} ${response.statusText}\n${result}`
+      } catch (error) {
+        resultElement.textContent = `Request failed: ${error.message}`
+      }
+    }
+
+    document.querySelectorAll('button[data-route]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const resultId = button.closest('section').querySelector('pre').id
+        showRouteResult(button.dataset.route, document.getElementById(resultId))
+      })
+    })
+
+    document.getElementById('student-id-form').addEventListener('submit', (event) => {
+      event.preventDefault()
+      const userId = encodeURIComponent(new FormData(event.currentTarget).get('userId'))
+      showRouteResult(`/api/student/${userId}`, document.getElementById('student-id-result'))
+    })
+
+    document.getElementById('delete-student-form').addEventListener('submit', (event) => {
+      event.preventDefault()
+      const userId = encodeURIComponent(new FormData(event.currentTarget).get('userId'))
+      showRouteResult(
+        `/api/student/${userId}`,
+        document.getElementById('delete-student-result'),
+        'DELETE'
+      )
+    })
+
+    document.getElementById('student-name-form').addEventListener('submit', (event) => {
+      event.preventDefault()
+      const formData = new FormData(event.currentTarget)
+      const id = encodeURIComponent(formData.get('id'))
+      const name = encodeURIComponent(formData.get('name'))
+      showRouteResult(`/api/student/${id}/${name}`, document.getElementById('student-name-result'))
+    })
+  </script>
+</body>
+</html>

@@ -24,3 +24,7 @@ let productsArray = [
         availableInventory:3,
     },
 ]
+
+if (typeof module !== "undefined" && module.exports) {
+    module.exports = productsArray
+}
